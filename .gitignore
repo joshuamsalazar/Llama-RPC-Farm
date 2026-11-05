@@ -76,7 +76,6 @@ SUMMARY_installation.md
 
 # PErsonal during testing
 .agents/
-.github/workflows
 opencode.jsonc
 
 # Graphs

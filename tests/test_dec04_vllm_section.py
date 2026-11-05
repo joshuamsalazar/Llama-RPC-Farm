@@ -34,9 +34,11 @@ def test_sanitize_delegates_to_adapter():
         cfg.sanitize_vllm_section({"kv_cache_dtype": "q8_0"})
 
 
-def test_apply_delegates_to_adapter_and_owner_is_vllm():
+def test_apply_delegates_to_adapter_and_owner_is_vllm(monkeypatch):
     """apply stores/normalizes in place and the section adapter is the
     VllmAdapter instance (engine_id/config_section identity)."""
+    monkeypatch.setattr(engine_registry, "load_settings",
+                        lambda *a, **k: {"engine": "vllm"})
     data = {"flags": {"ctx-size": 8192}, "vllm": {"max_model_len": 8192}}
     cfg.apply_vllm_section(data)
     assert data["vllm"] == {"max_model_len": 8192}

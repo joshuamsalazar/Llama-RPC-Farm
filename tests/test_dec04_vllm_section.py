@@ -44,7 +44,10 @@ def test_apply_delegates_to_adapter_and_owner_is_vllm():
     empty = {"vllm": None}
     cfg.apply_vllm_section(empty)
     assert "vllm" not in empty
-    adapter = engine_registry.get_engine_section_adapter()
+    # The vllm: section is owned by VllmAdapter regardless of the
+    # ACTIVE engine; config_loader must delegate to the owner, not the
+    # active engine's section handler.
+    adapter = engine_registry.get_engine({"engine": "vllm"})
     assert adapter.engine_id == "vllm"
     assert adapter.config_section == "vllm"
 

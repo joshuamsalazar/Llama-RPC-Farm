@@ -2460,9 +2460,20 @@ def _render_rpc(model_cfg, master, peers, cmd=None):
     # sit on disk readable).
     return f"""#!/bin/bash
 set -uo pipefail
-LINUX_USER="{master['username']}"
+LINUX_USER="{next((p.get('username') for p in peers if p.get('os', 'linux') in ('linux', 'macos') and p.get('username')), master.get('username') or '')}"
 WIN_USER="{win_user}"
-: "${{SSH_PASS:?SSH_PASS is not set — run via scripts/farm-run.sh <machine> <script> (vault decrypts it at runtime, never baked into this file)}}"
+# Key-first SSH: prefer the operator's SSH key. When SSH_PASS is empty,
+# the shim below strips the password arguments from existing
+# `sshpass -p "$SSH_PASS" ssh ...` call sites and invokes ssh directly.
+# A non-empty SSH_PASS retains the original password-auth behavior.
+sshpass() {{
+  if [ "$2" = "-p" ] && [ -z "$3" ]; then
+    shift 3
+    ssh "$@"
+  else
+    command sshpass "$@"
+  fi
+}}
 # NODES are per-SERVER entries (tag = IP, or IP#cpu for the separate
 # CPU/RAM server). SSH targets strip the #group suffix.
 LINUX_NODES=({linux_nodes})

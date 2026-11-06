@@ -278,10 +278,10 @@ class SSHManager:
                 self.ip,
                 port=self.port,
                 username=self.username,
-                password=self.password,
+                password=self.password or None,
                 timeout=self.timeout,
-                allow_agent=False,
-                look_for_keys=False,
+                allow_agent=True,
+                look_for_keys=True,
             )
         finally:
             # The key exchange completes BEFORE auth, so even a failed

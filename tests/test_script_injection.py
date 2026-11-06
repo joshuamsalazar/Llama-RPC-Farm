@@ -179,9 +179,12 @@ def test_render_rpc_password_never_baked_into_script(stub_cfg, bad_password):
     assert bad_password not in script, (
         "Plaintext password baked into generated script"
     )
-    assert "SSH_PASS" in script, "Expected runtime $SSH_PASS resolution in script"
-    sshpass_lines = [l for l in script.splitlines() if "sshpass" in l]
-    assert sshpass_lines, "Expected at least one sshpass line in generated script"
+    assert "sshpass() {" in script, "Expected key-first sshpass shim"
+    assert 'if [ "$2" = "-p" ] && [ -z "$3" ]; then' in script, (
+        "Expected empty-password key-first SSH branch"
+    )
+    sshpass_lines = [l for l in script.splitlines() if "sshpass -p" in l]
+    assert sshpass_lines, "Expected at least one password-auth sshpass call site"
     for line in sshpass_lines:
         assert '"$SSH_PASS"' in line or "'$SSH_PASS'" in line or "$SSH_PASS" in line
 

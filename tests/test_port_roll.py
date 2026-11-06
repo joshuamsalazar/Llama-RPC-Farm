@@ -453,8 +453,9 @@ def test_render_ps1_no_baked_device(stub_cfg):
 def test_render_password_with_quote_stays_valid(stub_cfg):
     """A single-quote in the machine password must not break the
     generated script — passwords are vault-only now (never baked in),
-    so even hostile values can't affect script syntax. The script stays
-    valid bash and requires $SSH_PASS at runtime."""
+    so even hostile values can't affect script syntax. The script uses
+    key-first SSH: an empty SSH_PASS strips sshpass password arguments;
+    a nonempty SSH_PASS retains password authentication."""
     from rpc_manager import _render_rpc
     model = {"model_id": "q", "flags": {},
              "base_path": "store://llm-models/x.gguf", "device_order": "",
@@ -468,7 +469,8 @@ def test_render_password_with_quote_stays_valid(stub_cfg):
     stub_cfg.update({m["name"]: m for m in (master, p1)})
     script = _render_rpc(model, master, [p1])
     assert "p@ss'word" not in script
-    assert "SSH_PASS:?" in script
+    assert "sshpass() {" in script
+    assert 'if [ "$2" = "-p" ] && [ -z "$3" ]; then' in script
     import subprocess as _sp
     import tempfile, os
     with tempfile.NamedTemporaryFile("w", suffix=".sh",
